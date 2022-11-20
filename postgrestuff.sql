@@ -39,12 +39,42 @@ INSERT INTO accounts (name, balance)
 VALUES ('James', 1000),
        ('Jamila', 1000);
 
+--BEGIN ROLLBACK COMMIT
+BEGIN;
+    UPDATE  accounts
+    SET balance = balance - 200
+    WHERE id =1;
 
+    UPDATE  accounts
+    SET balance = balance + 200
+    WHERE id =2;
+COMMIT;
 
  SELECT * FROM customer AS c
     RIGHT JOIN customer_order co on c.id = co.customer_id;
 
+
+-----------------------Start VACUUM TEST-------------------------------------
+
+ create table vacuum_test (id int) with (autovacuum_enabled = off);
+ insert into vacuum_test select * from generate_series(1,100000);
+select pg_size_pretty(pg_relation_size('vacuum_test'));
+select * from vacuum_test;
+update vacuum_test set id = id +1;
+vacuum vacuum_test;
+vacuum full vacuum_test;
+
+select * from pg_stat_user_tables;
+-----------------------End VAcUUM test--------------------------------------
 select * from pg_relation_filepath('customer');
 
 select * from pg_settings where name ='bgwriter_delay';
 select * from pg_settings where name ='bgwriter_lru_maxpages';
+
+select tablename, indexname, indexdef from pg_indexes where schemaname ='public';
+
+--------------Indexes---------------------
+CREATE INDEX accounts_balance_idx ON accounts(balance);
+DROP index accounts_balance_idx;
+
+
